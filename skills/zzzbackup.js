@@ -2,15 +2,23 @@ var request = require('request');
 var wordfilter = require('wordfilter');
 wordfilter.addWords(['zebra','elephant']);
 
+
 module.exports = function(controller) {
 
     controller.hears('request', 'message_received', function(bot, message) {
 
         bot.startConversation(message, function(err, convo) {
-
           convo.addMessage({
             text: 'Glad we could help you :) .',
-            action: 'completed'
+          }, 'yes_thread');
+
+          convo.addMessage({
+            text: 'Hmm... Let me try something else.',
+          }, 'no_thread');
+
+          convo.addMessage({
+            text: 'I am sorry but I cannot process that answer.',
+            action: 'default',
           }, 'yes_thread');
 
             convo.say('You are about to enter an FOI request that will be processed by our servers.');
@@ -28,46 +36,45 @@ module.exports = function(controller) {
                   { json: { question: response.text } },
                   function (error, response, body) {
                     if (!error && response.statusCode == 200) {
-                      if(body.good_match.length == 0 && body.possible_match.length == 0){
+                      if(body.good_match.length == 0){
                         convo.say('We processed your request but could not find any matches');
                       }else{
+                        //de aici am inceput sa adaug cod pentru a face conversatia mai complexa.
+
                         convo.say('Good news. We found a set of possible matches.');
                         convo.say('Here are the most likely matches in order:');
 
                         for(var i = 0; i < body.good_match.length; i++){
                           var goodMatchFound = 0;
-                          if(i == 0){
-                            convo.say('Here is a good match:')
-                          } else {
-                            convo.say('Here is another good match:')
-                          }
-                          convo.say(`The title of the response is ${body.good_match[i].title} and the reference number of the pdf is ${body.good_match[i].reference}`);
 
-                          convo.addQuestion(`Was this helpful? Please type "yes" or "no" `,
-                          [
+                          convo.say('Here is a possible match:')
+                          convo.say(`The title of the response is ${body.good_match[i].title} and the reference number of the pdf is ${body.good_match[i].reference}`);
+                          convo.ask(`Was this helpful? Please type "yes" or "no" `, [
                             {
-                              pattern: bot.utterances.yes,
-                              callback: function(response_message, convo) {
+                              pattern: 'yes',
+                              callback: function(response, convo){
+                                goodMatchFound = 1;
                                 convo.gotoThread('yes_thread');
-                                convo.next();
                               }
                             },
                             {
-                              pattern: bot.utterances.no,
-                              callback: function(response_message, convo) {
-                                convo.sayFirst('Hmmm... Let me try something else');
-                                convo.next();
+                              pattern: 'no',
+                              callback: function(response, convo){
+                                convo.gotoThread('no_thread');
                               }
                             },
                             {
                               default: true,
-                              callback: function(response_message, convo) {
-                                convo.sayFirst('I could not process that answer. I will move on...');
-                                convo.next();
+                              callback: function(response,convo){
+                                i--;
+                                convo.gotoThread('bad_response');
                               }
-                            }
-                          ],{},'default');
+                            }], {}, 'default')
 
+                            convo.activate();
+                            if(goodMatchFound == 1){
+                              break;
+                            }
                         }
                         // aici am terminat de loop-uit prin arrayul de good_matches.
                         // acuma incerc prin array-ul possible_match;
@@ -75,42 +82,53 @@ module.exports = function(controller) {
                           convo.say('That was the list of our most likely matches. I can try showing you some other results that I found');
                           for(var i = 0; i < body.possible_match.length; i++){
 
-                            if(i == 0){
-                              convo.say('Here is a possible match:')
-                            } else {
-                              convo.say('Here is another possible match:')
-                            }
-                            convo.say(`The title of the response is ${body.possible_match[i].title} and the reference number of the pdf is ${body.possible_match[i].reference}`);
+                            convo.addMessage({
+                              text: 'Glad we could help you :) .',
+                            }, 'yes_thread');
 
-                            convo.addQuestion(`Was this helpful? Please type "yes" or "no" `,
-                            [
+                            convo.addMessage({
+                              text: 'Hmm... Let me try something else.',
+                            }, 'no_thread');
+
+                            convo.addMessage({
+                              text: 'I am sorry but I cannot process that answer.',
+                              action: 'default',
+                            }, 'bad_response');
+
+                            var possibleMatchFound = 0;
+
+                            convo.say('Here is a possible match:')
+                            convo.say(`The title of the response is ${body.possible_match[i].title} and the reference number of the pdf is ${body.possible_match[i].reference}`);
+                            convo.ask(`Was this helpful? Please type "yes" or "no" : `, [
                               {
-                                pattern: bot.utterances.yes,
-                                callback: function(response_message, convo) {
+                                patten: 'yes',
+                                callback: function(response, convo){
+                                  possibleMatchFound = 1;
                                   convo.gotoThread('yes_thread');
-                                  convo.next();
                                 }
                               },
                               {
-                                pattern: bot.utterances.no,
-                                callback: function(response_message, convo) {
-                                  convo.sayFirst('Hmmm... Let me try something else');
-                                  convo.next();
+                                pattern: 'no',
+                                callback: function(response, convo){
+                                  convo.gotoThread('no_thread');
                                 }
                               },
                               {
                                 default: true,
-                                callback: function(response_message, convo) {
-                                  convo.sayFirst('I could not process that answer.');
+                                callback: function(response,convo){
                                   i--;
-                                  convo.next();
+                                  convo.gotoThread('bad_response');
                                 }
+                              }], {}, 'default')
+                              convo.activate();
+                              if(possibleMatchFound == 1){
+                                break;
                               }
-                            ],{},'default');
                           }
                         }
 
-                        convo.say(`I am sorry, but it seems you reached the end of my suggestions. In order to have your request answered, you'll have to email it directly to Camden. You can do that by typing 'email'.`);
+
+                        // here I need to make the convo more complex The reference number is : ' + body.good_match[0].reference
 
                       }
                     } else {
