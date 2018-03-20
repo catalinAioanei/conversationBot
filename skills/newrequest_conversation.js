@@ -29,9 +29,10 @@ module.exports = function(controller) {
                   function (error, response, body) {
                     if (!error && response.statusCode == 200) {
                       if(body.good_match.length == 0 && body.possible_match.length == 0){
-                        convo.say('We processed your request but could not find any matches');
+                        convo.say(`It looks like nobody asked this before. Type 'email' to send this request directly to Camden where we can answer your request`);
                       }else{
                         convo.say('Good news. We found a set of possible matches to your request.');
+
                         if(body.good_match.length > 0){
                           convo.say('Here are the most likely matches in order:');
                         }
