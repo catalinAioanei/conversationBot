@@ -31,8 +31,10 @@ module.exports = function(controller) {
                       if(body.good_match.length == 0 && body.possible_match.length == 0){
                         convo.say('We processed your request but could not find any matches');
                       }else{
-                        convo.say('Good news. We found a set of possible matches.');
-                        convo.say('Here are the most likely matches in order:');
+                        convo.say('Good news. We found a set of possible matches to your request.');
+                        if(body.good_match.length > 0){
+                          convo.say('Here are the most likely matches in order:');
+                        }
 
                         for(var i = 0; i < body.good_match.length; i++){
                           var goodMatchFound = 0;
@@ -76,13 +78,15 @@ module.exports = function(controller) {
                         }
                         // aici am terminat de loop-uit prin arrayul de good_matches.
                         // acuma incerc prin array-ul possible_match;
-                        if(body.good_match.length == 0){
-                          convo.say("I am sorry but I could not come up with any good matches. ");
-                        }else{
+                        if(body.good_match.length != 0){
                           convo.say("That was the list of our most likely matches. ");
                         }
                         if(body.possible_match.length > 0 && goodMatchFound !=1){
-                          convo.say('I can try showing you some other similar results that I found');
+                          if(body.good_match.length !=0){
+                            convo.say('I can try showing you some other similar results that I found');
+                          } else {
+                            convo.say('I will show you a list of requests related to your search.');
+                          }
                           for(var i = 0; i < body.possible_match.length; i++){
 
                             if(i == 0){
