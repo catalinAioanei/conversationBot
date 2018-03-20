@@ -16,6 +16,10 @@ module.exports = function(controller) {
             {
                 title: 'Email',
                 payload: 'email'
+            },
+            {
+                title: 'About',
+                payload: 'about'
             }
         ]
       },function() {});

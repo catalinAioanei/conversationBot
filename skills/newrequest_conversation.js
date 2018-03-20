@@ -24,7 +24,7 @@ module.exports = function(controller) {
                 convo.say('Please wait while we try to find any matches...');
 
                 request.post(
-                  'http://localhost:5000/predict',
+                  'http://51.143.153.18:5000/predict',
                   { json: { question: response.text } },
                   function (error, response, body) {
                     if (!error && response.statusCode == 200) {
@@ -42,6 +42,11 @@ module.exports = function(controller) {
                             convo.say('Here is another good match:')
                           }
                           convo.say(`The title of the response is ${body.good_match[i].title} and the reference number of the pdf is ${body.good_match[i].reference}`);
+                          convo.say({
+                            text: 'Click here for more information:',
+                            link_title: body.good_match[i].title,
+                            open_link: body.good_match[i].link,
+                          });
 
                           convo.addQuestion(`Was this helpful? Please type "yes" or "no" `,
                           [
@@ -71,8 +76,13 @@ module.exports = function(controller) {
                         }
                         // aici am terminat de loop-uit prin arrayul de good_matches.
                         // acuma incerc prin array-ul possible_match;
+                        if(body.good_match.length == 0){
+                          convo.say("I am sorry but I could not come up with any good matches. ");
+                        }else{
+                          convo.say("That was the list of our most likely matches. ");
+                        }
                         if(body.possible_match.length > 0 && goodMatchFound !=1){
-                          convo.say('That was the list of our most likely matches. I can try showing you some other results that I found');
+                          convo.say('I can try showing you some other similar results that I found');
                           for(var i = 0; i < body.possible_match.length; i++){
 
                             if(i == 0){
@@ -81,6 +91,12 @@ module.exports = function(controller) {
                               convo.say('Here is another possible match:')
                             }
                             convo.say(`The title of the response is ${body.possible_match[i].title} and the reference number of the pdf is ${body.possible_match[i].reference}`);
+
+                            convo.say({
+                              text: 'Click here for more information:',
+                              link_title: body.possible_match[i].title,
+                              open_link: body.possible_match[i].link,
+                            });
 
                             convo.addQuestion(`Was this helpful? Please type "yes" or "no" `,
                             [
@@ -115,6 +131,7 @@ module.exports = function(controller) {
                       }
                     } else {
                       convo.say("We are sorry but we couldn't process your request. Something could be wrong with our servers. Try submitting your request at a later time.");
+                      console.log(error);
                     }
                   }
                 );
@@ -147,6 +164,7 @@ module.exports = function(controller) {
             "date": "03-08-2017",
             "reference": "21016748",
             "title": "Children referred to Channel"
+            'link': ''
         },
         {
             "date": "03-08-2017",
