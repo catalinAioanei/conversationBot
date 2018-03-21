@@ -3,11 +3,13 @@ const emailjs = require('emailjs');
 const xoauth2 = require('xoauth2');
 const validator = require('validator');
 const wordfilter = require('wordfilter');
+var request = require('request');
 wordfilter.addWords(['zebra','elephant']);
 
 module.exports = function(controller) {
 
   controller.hears(['^email$'],'message_received', function(bot, message) {
+    var label;
     bot.startConversation(message, function(err, convo) {
       convo.say('You are about to send an email to the Camden Council with an FOI request.');
       convo.ask('What is your request?' , function(response, convo){
@@ -17,7 +19,21 @@ module.exports = function(controller) {
           convo.say('do not use swearwords');
         }else{
           convo.say('Your request passed our validation.');
-          var request = response.text;
+          var text = response.text;
+          // aici trebuie sa trimit requestul la carlo ca sa obtin tagul
+          request.post(
+            'http://51.143.153.18:5000/predict',
+            { json: { question: response.text } },
+            function (error, response, body) {
+              if (!error && response.statusCode == 200) {
+                if(body.label !== null){
+                  label = body.label;
+                } else {
+                  label = 'Could not label request';
+                }
+              }
+            });
+
           convo.ask('Please enter your email address', function (response,convo){
             convo.say('You entered the following address: ' + response.text);
             if(!validator.isEmail(response.text)){
@@ -40,7 +56,7 @@ module.exports = function(controller) {
 
     // send the message and get a callback with an error or details of the message that was sent
               server.send({
-                text:    request,
+                text:    `A new FOI request has been submitted. \n Label: ${label} \n Request: ${text} `,
                 from:    'FOI_Request Service',
                 to:      "Catalin <cata_aioanei@yahoo.com>",
                 cc: '',

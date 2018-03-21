@@ -13,6 +13,11 @@ module.exports = function(controller) {
             action: 'completed'
           }, 'yes_thread');
 
+          convo.addMessage({
+            text: `Sorry that we could not help. Maybe try rewriting you request?`,
+            action: 'completed'
+          }, 'quit_thread');
+
             convo.say('You are about to enter an FOI request that will be processed by our servers.');
 
             convo.ask('What is your request?', function(response, convo) {
@@ -51,12 +56,19 @@ module.exports = function(controller) {
                             open_link: body.good_match[i].link,
                           });
 
-                          convo.addQuestion(`Was this helpful? Please type "yes" or "no" `,
+                          convo.addQuestion(`Was this helpful? Please type "yes" or "no". Type "quit" to end my suggestions. `,
                           [
                             {
                               pattern: bot.utterances.yes,
                               callback: function(response_message, convo) {
                                 convo.gotoThread('yes_thread');
+                                convo.next();
+                              }
+                            },
+                            {
+                              pattern: 'quit',
+                              callback: function(response_message, convo) {
+                                convo.gotoThread('quit_thread');
                                 convo.next();
                               }
                             },
@@ -103,12 +115,19 @@ module.exports = function(controller) {
                               open_link: body.possible_match[i].link,
                             });
 
-                            convo.addQuestion(`Was this helpful? Please type "yes" or "no" `,
+                            convo.addQuestion(`Was this helpful? Please type "yes" or "no". Type "quit" to end my suggestions. `,
                             [
                               {
                                 pattern: bot.utterances.yes,
                                 callback: function(response_message, convo) {
                                   convo.gotoThread('yes_thread');
+                                  convo.next();
+                                }
+                              },
+                              {
+                                pattern: 'quit',
+                                callback: function(response_message, convo) {
+                                  convo.gotoThread('quit_thread');
                                   convo.next();
                                 }
                               },
