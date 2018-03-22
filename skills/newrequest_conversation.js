@@ -33,8 +33,12 @@ module.exports = function(controller) {
                   { json: { question: response.text } },
                   function (error, response, body) {
                     if (!error && response.statusCode == 200) {
-                      if(body.direct_answer != null){
-                        convo.say(`The most likely answer we found is ${body.direct_answer}`);
+                      var finish = 0;
+                      if(body.direct_answer.length >0){
+                        convo.say(`The most likely answer we found is: ${body.direct_answer}`);
+                        finish = 1;
+                      }
+                      if(finish === 1){
                         convo.gotoThread('yes_thread');
                       }
                       if(body.good_match.length == 0 && body.possible_match.length == 0){
