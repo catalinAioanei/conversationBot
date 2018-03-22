@@ -34,12 +34,12 @@ module.exports = function(controller) {
                   function (error, response, body) {
                     if (!error && response.statusCode == 200) {
                       var finish = 0;
-                      if(body.direct_answer.length >0){
-                        convo.say(`The most likely answer we found is: ${body.direct_answer}`);
-                        finish = 1;
-                      }
-                      if(finish === 1){
-                        convo.gotoThread('yes_thread');
+                      if(body.direct_answer.length > 0){
+                        var answer = body.direct_answer;
+                        convo.say({
+                          text: `The most likely answer we found is: ${answer}`,
+                          action: completed
+                        });
                       }
                       if(body.good_match.length == 0 && body.possible_match.length == 0){
                         convo.say(`It looks like nobody asked this before. Type 'email' to send this request directly to Camden where we can answer your request`);
