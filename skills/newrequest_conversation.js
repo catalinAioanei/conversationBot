@@ -14,7 +14,7 @@ module.exports = function(controller) {
           }, 'yes_thread');
 
           convo.addMessage({
-            text: `Sorry that we could not help. Maybe try rewriting you request?`,
+            text: `Sorry that we could not help. Maybe try rewriting your request?`,
             action: 'completed'
           }, 'quit_thread');
 
@@ -33,6 +33,10 @@ module.exports = function(controller) {
                   { json: { question: response.text } },
                   function (error, response, body) {
                     if (!error && response.statusCode == 200) {
+                      if(body.direct_answer != null){
+                        convo.say(`The most likely answer we found is ${body.direct_answer}`);
+                        convo.gotoThread('yes_thread');
+                      }
                       if(body.good_match.length == 0 && body.possible_match.length == 0){
                         convo.say(`It looks like nobody asked this before. Type 'email' to send this request directly to Camden where we can answer your request`);
                       }else{
